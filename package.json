@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "pg": "^8.8.0",
+    "write-excel-file": "^1.4.15",
+    "xlsx": "^0.18.5"
+  },
+  "name": "dbtoexcel",
+  "description": "Read data from PostgreSQL database into an Excel file used to make some calculation for testing purposes.",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/av-dias/dbToExcel.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/av-dias/dbToExcel/issues"
+  },
+  "homepage": "https://github.com/av-dias/dbToExcel#readme"
+}

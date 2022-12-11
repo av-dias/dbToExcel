@@ -6,6 +6,7 @@
 
 # file
 *.sql
+*.xlsx
 
 # Logs
 logs

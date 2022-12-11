@@ -37,4 +37,4 @@ const formatAndCal = (resUser1, resUser2) => {
   return appendedList;
 };
 
-module.exports = { formatData };
+module.exports = { formatAndCal };

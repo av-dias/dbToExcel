@@ -1,4 +1,3 @@
-const reader = require("xlsx");
 const ExcelJS = require("exceljs");
 const dotenv = require("dotenv");
 dotenv.config();

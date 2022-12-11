@@ -1,43 +1,41 @@
 const reader = require("xlsx");
+const ExcelJS = require("exceljs");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const db = require("./db");
+const colsSchema = require("./excelSchema");
+const currentDatetime = require("./util");
+const { formatAndCal } = require("./functions");
+const { getPurchase } = require("./queries");
 
-const dbtoExcel = async () => {
-  try {
-    const res = await db.query("SELECT * FROM purchase LIMIT 5");
+const runDBtoExcel = async () => {
+  // Create new excel instance
+  const workbook = new ExcelJS.Workbook();
+  // Load existing workbook
+  await workbook.xlsx.readFile("db.xlsx");
 
-    console.log(res.rows);
-    // Reading our test file
-    const file = reader.readFile("./db.xlsx");
+  // Add new sheet with current datetime
+  const sheet = workbook.addWorksheet(currentDatetime());
+  // Excel column schema
+  sheet.columns = colsSchema;
 
-    const ws = reader.utils.json_to_sheet(res.rows);
+  const res = await getPurchase();
 
-    let date = new Date();
-    let date_string =
-      date.getDate() +
-      "_" +
-      date.getMonth() +
-      "_" +
-      date.getFullYear() +
-      "_" +
-      date.getHours() +
-      "" +
-      date.getMinutes() +
-      "" +
-      date.getSeconds();
+  // keep {} where you wan to skip the row
+  sheet.addRow({ user1: res.users[0].name, user2: res.users[1].name });
 
-    console.log(date_string);
+  // append same rows from each user
+  // make some stats calculations
+  let appendedList = formatAndCal(res.user1, res.user2);
 
-    reader.utils.book_append_sheet(file, ws, date_string);
+  // write data row by row
+  appendedList.forEach((item, i) => {
+    sheet.addRow(item);
+  });
 
-    // Writing to our file
-    await reader.writeFile(file, "./db.xlsx");
-    console.log("Excel writen.");
-  } catch (e) {
-    console.log(e);
-  }
+  workbook.xlsx.writeFile("db.xlsx").then(() => {
+    console.log("Finished...");
+  });
 };
 
-dbtoExcel();
+runDBtoExcel();

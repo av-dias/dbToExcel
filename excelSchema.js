@@ -1,5 +1,9 @@
 // keep {} where you wan to skip the column
 module.exports = [
+  { key: "name", value: "Name" },
+  { key: "calcs", value: "Calcs" },
+  {},
+  {},
   { key: "user1", value: "User" },
   { key: "name1", header: "Name" },
   { key: "type1", header: "Type" },

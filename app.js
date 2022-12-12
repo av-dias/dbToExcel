@@ -20,12 +20,11 @@ const runDBtoExcel = async () => {
 
   const res = await getPurchase();
 
-  // keep {} where you wan to skip the row
-  sheet.addRow({ user1: res.users[0].name, user2: res.users[1].name });
-
   // append same rows from each user
   // make some stats calculations
-  let appendedList = formatAndCal(res.user1, res.user2);
+  let appendedList = formatAndCal(res.users, res.user1, res.user2);
+
+  sheet.addRow({ user1: res.users[0].name, user2: res.users[1].name });
 
   // write data row by row
   appendedList.forEach((item, i) => {

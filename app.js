@@ -4,8 +4,12 @@ dotenv.config();
 
 const colsSchema = require("./excelSchema");
 const currentDatetime = require("./util");
-const { formatAndCal } = require("./functions");
-const { getPurchase } = require("./queries");
+const { formatAndCal, transAdjust } = require("./functions");
+const {
+  getPurchases,
+  getTransactions,
+  getPurchaseTypes,
+} = require("./queries");
 
 const runDBtoExcel = async () => {
   // Create new excel instance
@@ -18,13 +22,34 @@ const runDBtoExcel = async () => {
   // Excel column schema
   sheet.columns = colsSchema;
 
-  const res = await getPurchase();
+  // Query calls
+  const resPurchases = await getPurchases();
+  const resTransactions = await getTransactions();
+  const purchasesTypes = await getPurchaseTypes();
 
   // append same rows from each user
   // make some stats calculations
-  let appendedList = formatAndCal(res.users, res.user1, res.user2);
+  let [appendedList, rowNr] = formatAndCal(
+    resPurchases.users,
+    resPurchases.user1,
+    resPurchases.user2,
+    purchasesTypes
+  );
 
-  sheet.addRow({ user1: res.users[0].name, user2: res.users[1].name });
+  return;
+
+  // get transactions and adjust values
+  [appendedList, rowNr] = transAdjust(
+    appendedList,
+    resTransactions,
+    rowNr,
+    resPurchases.users
+  );
+
+  sheet.addRow({
+    user1: resPurchases.users[0].name,
+    user2: resPurchases.users[1].name,
+  });
 
   // write data row by row
   appendedList.forEach((item, i) => {

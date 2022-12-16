@@ -1,6 +1,6 @@
 // Append data from same row
 // Make stats calculations
-const formatAndCal = (resUsers, resUser1, resUser2, purchasesTypes) => {
+const formatAndCal = (resUsers, resUser1, resUser2) => {
   let appendedList = [];
   let userTotal = [0, 0];
   let userOwn = [0, 0];
@@ -21,15 +21,15 @@ const formatAndCal = (resUsers, resUser1, resUser2, purchasesTypes) => {
       usersStats[0]["purchaseTypeByMonth"][rU1.type1] = new Map();
 
     let date = new Date(rU1.dop1).getMonth() + 1;
-    let currentValue = usersStats[0]["purchaseTypeByMonth"][rU1.type1][date];
-    console.log(currentValue);
+    let currentValue =
+      usersStats[0]["purchaseTypeByMonth"][rU1.type1].get(date);
     if (!currentValue) {
-      usersStats[0]["purchaseTypeByMonth"][rU1.type1][date] = rU1.value1;
+      usersStats[0]["purchaseTypeByMonth"][rU1.type1].set(date, rU1.value1);
     } else {
-      console.log(currentValue + rU1.value1);
-      usersStats[0]["purchaseTypeByMonth"][rU1.type1][date] = (
-        parseFloat(currentValue) + parseFloat(rU1.value1)
-      ).toFixed(2);
+      usersStats[0]["purchaseTypeByMonth"][rU1.type1].set(
+        date,
+        (parseFloat(currentValue) + parseFloat(rU1.value1)).toFixed(2)
+      );
     }
 
     // Stats Calc
@@ -39,12 +39,24 @@ const formatAndCal = (resUsers, resUser1, resUser2, purchasesTypes) => {
     userTotal[1] += rU2.value2;
     userOwn[1] += rU2["myShare2"];
     userShare[1] += rU2["youShare2"];
+    // Purchase Type Calcs
+    if (usersStats[1]["purchaseTypeByMonth"][rU2.type2] == undefined)
+      usersStats[1]["purchaseTypeByMonth"][rU2.type2] = new Map();
+
+    date = new Date(rU2.dop2).getMonth() + 1;
+    currentValue = usersStats[1]["purchaseTypeByMonth"][rU2.type2].get(date);
+    if (!currentValue) {
+      usersStats[1]["purchaseTypeByMonth"][rU2.type2].set(date, rU2.value2);
+    } else {
+      usersStats[1]["purchaseTypeByMonth"][rU2.type2].set(
+        date,
+        (parseFloat(currentValue) + parseFloat(rU2.value2)).toFixed(2)
+      );
+    }
 
     let append = Object.assign(rU1, rU2);
     appendedList.push(append);
   }
-
-  console.log(usersStats[0]);
 
   while (resUser1.length) {
     let rU1 = resUser1.pop();
@@ -102,13 +114,12 @@ const formatAndCal = (resUsers, resUser1, resUser2, purchasesTypes) => {
     appendedList[rowNr++]["calcs"] = userShare[1] - userShare[0];
   }
 
-  return [appendedList, rowNr];
+  return [appendedList, rowNr, usersStats];
 };
 
 const transAdjust = (appendedList, resTransactions, rowNr, users) => {
   totalUser1 = 0;
   totalUser2 = 0;
-  console.log(resTransactions);
   // check transations user1 received
   while (resTransactions.user1.length) {
     totalUser1 += resTransactions.user1.pop().amount;
@@ -117,8 +128,6 @@ const transAdjust = (appendedList, resTransactions, rowNr, users) => {
   while (resTransactions.user2.length) {
     totalUser2 += resTransactions.user2.pop().amount;
   }
-
-  console.log(totalUser1, totalUser2);
 
   appendedList[rowNr]["name"] = "Transactions";
   appendedList[rowNr++]["calcs"] = "Received";
@@ -132,4 +141,26 @@ const transAdjust = (appendedList, resTransactions, rowNr, users) => {
   return [appendedList, rowNr];
 };
 
-module.exports = { formatAndCal, transAdjust };
+const statsCalcs = (usersStats) => {
+  usersStats[0]["avg_purchase_by_month"] = {};
+  usersStats[1]["avg_purchase_by_month"] = {};
+
+  let total = 0;
+
+  console.log(usersStats[0]);
+  console.log(usersStats[1]);
+
+  Object.keys(usersStats[0]["purchaseTypeByMonth"]).forEach((type) => {
+    //console.log(usersStats[0]["purchaseTypeByMonth"][type].size);
+    /* usersStats[0]["purchaseTypeByMonth"][type].forEach((value) => {
+      total += value;
+    }); */
+  });
+
+  /* console.log(usersStats[0]);
+  console.log(usersStats[1]);*/
+
+  return usersStats;
+};
+
+module.exports = { formatAndCal, transAdjust, statsCalcs };

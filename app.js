@@ -4,7 +4,7 @@ dotenv.config();
 
 const colsSchema = require("./excelSchema");
 const currentDatetime = require("./util");
-const { formatAndCal, transAdjust } = require("./functions");
+const { formatAndCal, transAdjust, statsCalcs } = require("./functions");
 const {
   getPurchases,
   getTransactions,
@@ -29,13 +29,14 @@ const runDBtoExcel = async () => {
 
   // append same rows from each user
   // make some stats calculations
-  let [appendedList, rowNr] = formatAndCal(
+  let [appendedList, rowNr, usersStats] = formatAndCal(
     resPurchases.users,
     resPurchases.user1,
-    resPurchases.user2,
-    purchasesTypes
+    resPurchases.user2
   );
 
+  usersStats = statsCalcs(usersStats);
+  // Mid exit for testing purposes
   return;
 
   // get transactions and adjust values

@@ -5,11 +5,7 @@ dotenv.config();
 const colsSchema = require("./excelSchema");
 const currentDatetime = require("./util");
 const { formatAndCal, transAdjust, statsCalcs } = require("./functions");
-const {
-  getPurchases,
-  getTransactions,
-  getPurchaseTypes,
-} = require("./queries");
+const { getPurchases, getTransactions, getPurchaseTypes } = require("./queries");
 
 const runDBtoExcel = async () => {
   // Create new excel instance
@@ -29,23 +25,14 @@ const runDBtoExcel = async () => {
 
   // append same rows from each user
   // make some stats calculations
-  let [appendedList, rowNr, usersStats] = formatAndCal(
-    resPurchases.users,
-    resPurchases.user1,
-    resPurchases.user2
-  );
+  let [appendedList, rowNr, usersStats] = formatAndCal(resPurchases.users, resPurchases.user1, resPurchases.user2);
 
   usersStats = statsCalcs(usersStats);
   // Mid exit for testing purposes
-  return;
+  //return;
 
   // get transactions and adjust values
-  [appendedList, rowNr] = transAdjust(
-    appendedList,
-    resTransactions,
-    rowNr,
-    resPurchases.users
-  );
+  [appendedList, rowNr] = transAdjust(appendedList, resTransactions, rowNr, resPurchases.users);
 
   sheet.addRow({
     user1: resPurchases.users[0].name,

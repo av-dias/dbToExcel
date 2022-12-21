@@ -5,7 +5,22 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
   let userTotal = [0, 0];
   let userOwn = [0, 0];
   let userShare = [0, 0];
-  let usersStats = [{ purchaseTypeByMonth: {} }, { purchaseTypeByMonth: {} }];
+  let usersStats = [
+    {
+      purchaseTypeByMonthRelative: {},
+      purchaseTypeByMonthMine: {},
+      avg_purchase_by_month_relative: {},
+      avg_purchase_by_month_mine: {},
+      avg_purchase_by_month_total: {},
+    },
+    {
+      purchaseTypeByMonthRelative: {},
+      purchaseTypeByMonthMine: {},
+      avg_purchase_by_month_relative: {},
+      avg_purchase_by_month_mine: {},
+      avg_purchase_by_month_total: {},
+    },
+  ];
 
   while (resUser1.length && resUser2.length) {
     let rU1 = resUser1.pop();
@@ -17,18 +32,39 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     userOwn[0] += rU1["myShare1"];
     userShare[0] += rU1["youShare1"];
     // Purchase Type Calcs
-    if (usersStats[0]["purchaseTypeByMonth"][rU1.type1] == undefined)
-      usersStats[0]["purchaseTypeByMonth"][rU1.type1] = new Map();
+    if (usersStats[0]["purchaseTypeByMonthRelative"][rU1.type1] == undefined)
+      usersStats[0]["purchaseTypeByMonthRelative"][rU1.type1] = new Map();
 
     let date = new Date(rU1.dop1).getMonth() + 1;
     let currentValue =
-      usersStats[0]["purchaseTypeByMonth"][rU1.type1].get(date);
+      usersStats[0]["purchaseTypeByMonthRelative"][rU1.type1].get(date);
     if (!currentValue) {
-      usersStats[0]["purchaseTypeByMonth"][rU1.type1].set(date, rU1.value1);
+      usersStats[0]["purchaseTypeByMonthRelative"][rU1.type1].set(
+        date,
+        rU1.value1
+      );
     } else {
-      usersStats[0]["purchaseTypeByMonth"][rU1.type1].set(
+      usersStats[0]["purchaseTypeByMonthRelative"][rU1.type1].set(
         date,
         (parseFloat(currentValue) + parseFloat(rU1.value1)).toFixed(2)
+      );
+    }
+    // Purchase Mine ONLY Type Calcs
+    if (usersStats[0]["purchaseTypeByMonthMine"][rU1.type1] == undefined)
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1] = new Map();
+
+    date = new Date(rU1.dop1).getMonth() + 1;
+    currentValue =
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1].get(date);
+    if (!currentValue) {
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1].set(
+        date,
+        rU1["myShare1"]
+      );
+    } else {
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1].set(
+        date,
+        (parseFloat(currentValue) + parseFloat(rU1["myShare1"])).toFixed(2)
       );
     }
 
@@ -40,17 +76,39 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     userOwn[1] += rU2["myShare2"];
     userShare[1] += rU2["youShare2"];
     // Purchase Type Calcs
-    if (usersStats[1]["purchaseTypeByMonth"][rU2.type2] == undefined)
-      usersStats[1]["purchaseTypeByMonth"][rU2.type2] = new Map();
+    if (usersStats[1]["purchaseTypeByMonthRelative"][rU2.type2] == undefined)
+      usersStats[1]["purchaseTypeByMonthRelative"][rU2.type2] = new Map();
 
     date = new Date(rU2.dop2).getMonth() + 1;
-    currentValue = usersStats[1]["purchaseTypeByMonth"][rU2.type2].get(date);
+    currentValue =
+      usersStats[1]["purchaseTypeByMonthRelative"][rU2.type2].get(date);
     if (!currentValue) {
-      usersStats[1]["purchaseTypeByMonth"][rU2.type2].set(date, rU2.value2);
+      usersStats[1]["purchaseTypeByMonthRelative"][rU2.type2].set(
+        date,
+        rU2.value2
+      );
     } else {
-      usersStats[1]["purchaseTypeByMonth"][rU2.type2].set(
+      usersStats[1]["purchaseTypeByMonthRelative"][rU2.type2].set(
         date,
         (parseFloat(currentValue) + parseFloat(rU2.value2)).toFixed(2)
+      );
+    }
+    // Purchase Mine ONLY Type Calcs
+    if (usersStats[1]["purchaseTypeByMonthMine"][rU2.type2] == undefined)
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2] = new Map();
+
+    date = new Date(rU2.dop2).getMonth() + 1;
+    currentValue =
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2].get(date);
+    if (!currentValue) {
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2].set(
+        date,
+        rU2["myShare2"]
+      );
+    } else {
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2].set(
+        date,
+        (parseFloat(currentValue) + parseFloat(rU2["myShare2"])).toFixed(2)
       );
     }
 
@@ -68,6 +126,25 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     userOwn[0] += rU1["myShare1"];
     userShare[0] += rU1["youShare1"];
 
+    // Purchase Mine ONLY Type Calcs
+    if (usersStats[0]["purchaseTypeByMonthMine"][rU1.type1] == undefined)
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1] = new Map();
+
+    date = new Date(rU1.dop1).getMonth() + 1;
+    currentValue =
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1].get(date);
+    if (!currentValue) {
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1].set(
+        date,
+        rU1["myShare1"]
+      );
+    } else {
+      usersStats[0]["purchaseTypeByMonthMine"][rU1.type1].set(
+        date,
+        (parseFloat(currentValue) + parseFloat(rU1["myShare1"])).toFixed(2)
+      );
+    }
+
     appendedList.push(rU1);
   }
 
@@ -80,6 +157,25 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     userTotal[1] += rU2.value2;
     userOwn[1] += rU2["myShare2"];
     userShare[1] += rU2["youShare2"];
+
+    // Purchase Mine ONLY Type Calcs
+    if (usersStats[1]["purchaseTypeByMonthMine"][rU2.type2] == undefined)
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2] = new Map();
+
+    date = new Date(rU2.dop2).getMonth() + 1;
+    currentValue =
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2].get(date);
+    if (!currentValue) {
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2].set(
+        date,
+        rU2["myShare2"]
+      );
+    } else {
+      usersStats[1]["purchaseTypeByMonthMine"][rU2.type2].set(
+        date,
+        (parseFloat(currentValue) + parseFloat(rU2["myShare2"])).toFixed(2)
+      );
+    }
 
     appendedList.push(rU2);
   }
@@ -141,25 +237,32 @@ const transAdjust = (appendedList, resTransactions, rowNr, users) => {
   return [appendedList, rowNr];
 };
 
+/*  purchaseTypeByMonthRelative,
+    purchaseTypeByMonthMine,
+    avg_purchase_by_month_relative,
+    avg_purchase_by_month_mine,
+    avg_purchase_by_month_total, */
 const statsCalcs = (usersStats) => {
-  usersStats[0]["avg_purchase_by_month"] = {};
-  usersStats[1]["avg_purchase_by_month"] = {};
+  let calcsIO = {
+    purchaseTypeByMonthRelative: "avg_purchase_by_month_relative",
+    purchaseTypeByMonthMine: "avg_purchase_by_month_mine",
+  };
 
-  let total = 0;
+  Object.keys(calcsIO).forEach((input) => {
+    for (let i = 0; i < usersStats.length; i++) {
+      Object.keys(usersStats[i][input]).forEach((type) => {
+        let arrayType = Array.from(usersStats[i][input][type].values());
+        let size = arrayType.length;
+        let total = arrayType.reduce((acc, curr) => {
+          return parseFloat(acc) + parseFloat(curr);
+        });
 
-  console.log(usersStats[0]);
-  console.log(usersStats[1]);
-
-  Object.keys(usersStats[0]["purchaseTypeByMonth"]).forEach((type) => {
-    //console.log(usersStats[0]["purchaseTypeByMonth"][type].size);
-    /* usersStats[0]["purchaseTypeByMonth"][type].forEach((value) => {
-      total += value;
-    }); */
+        usersStats[i][calcsIO[input]][type] = (total / size).toFixed(2);
+      });
+    }
   });
 
-  /* console.log(usersStats[0]);
-  console.log(usersStats[1]);*/
-
+  console.log(usersStats[0]);
   return usersStats;
 };
 

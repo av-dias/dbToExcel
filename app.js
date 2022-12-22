@@ -29,7 +29,7 @@ const runDBtoExcel = async () => {
 
   usersStats = statsCalcs(usersStats);
   // Mid exit for testing purposes
-  //return;
+  return;
 
   // get transactions and adjust values
   [appendedList, rowNr] = transAdjust(appendedList, resTransactions, rowNr, resPurchases.users);

@@ -1,6 +1,8 @@
+const cloneDeep = require("lodash.clonedeep");
+
 const aux = (usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare) => {
-  let purchaseTypes = ["purchaseTypeByMonthRelative", "purchaseTypeByMonthMine"];
-  let targetValue = ["value", "myShare"];
+  let typeByMonth = ["purchaseTypeByMonthRelative", "purchaseTypeByMonthMine", "purchaseTypeByMonthYour"];
+  let targetValue = ["value", "myShare", "youShare"];
 
   for (; user < maxUser; user++) {
     // Add details
@@ -11,21 +13,21 @@ const aux = (usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userS
     userOwn[user] += usersPurchase[user]["myShare"];
     userShare[user] += usersPurchase[user]["youShare"];
 
-    for (let types = 0; types < purchaseTypes.length; types++) {
+    for (let _type = 0; _type < typeByMonth.length; _type++) {
       // Get purchase by type and month
       let date = new Date(usersPurchase[user].dop).getMonth() + 1;
-      if (!usersStats[user][purchaseTypes[types]].hasOwnProperty(usersPurchase[user].type)) {
-        usersStats[user][purchaseTypes[types]][usersPurchase[user].type] = new Map([[date, 0]]);
+      if (!usersStats[user][typeByMonth[_type]].hasOwnProperty(usersPurchase[user].type)) {
+        usersStats[user][typeByMonth[_type]][usersPurchase[user].type] = new Map([[date, 0]]);
       }
 
-      let currentValue = usersStats[user][purchaseTypes[types]][usersPurchase[user].type].get(date);
+      let currentValue = usersStats[user][typeByMonth[_type]][usersPurchase[user].type].get(date);
       if (isNaN(currentValue)) {
         currentValue = 0;
       }
 
-      usersStats[user][purchaseTypes[types]][usersPurchase[user].type].set(
+      usersStats[user][typeByMonth[_type]][usersPurchase[user].type].set(
         date,
-        (parseFloat(currentValue) + parseFloat(usersPurchase[user][targetValue[types]])).toFixed(2)
+        (parseFloat(currentValue) + parseFloat(usersPurchase[user][targetValue[_type]])).toFixed(2)
       );
     }
   }
@@ -64,8 +66,10 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
   let userShare = [0, 0];
   let usersStats = [
     {
-      purchaseTypeByMonthRelative: {},
-      purchaseTypeByMonthMine: {},
+      purchaseTypeByMonthRelative: {},  // What left my wallet
+      purchaseTypeByMonthMine: {},      // What should have left my wallet
+      purchaseTypeByMonthYour: {},      // What I paid for someone
+      purchaseTypeByMonthReal: {},      // What should have left my wallet in reality (couple expenses)
       avg_purchase_by_month_relative: {},
       avg_purchase_by_month_mine: {},
       avg_purchase_by_month_total: {},
@@ -73,6 +77,8 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     {
       purchaseTypeByMonthRelative: {},
       purchaseTypeByMonthMine: {},
+      purchaseTypeByMonthYour: {},
+      purchaseTypeByMonthReal: {},
       avg_purchase_by_month_relative: {},
       avg_purchase_by_month_mine: {},
       avg_purchase_by_month_total: {},
@@ -171,6 +177,8 @@ const transAdjust = (appendedList, resTransactions, rowNr, users) => {
 
 /*  purchaseTypeByMonthRelative,
     purchaseTypeByMonthMine,
+    purchaseTypeByMonthYour,
+    purchaseTypeByMonthReal,
     avg_purchase_by_month_relative,
     avg_purchase_by_month_mine,
     avg_purchase_by_month_total, */
@@ -193,6 +201,24 @@ const statsCalcs = (usersStats) => {
       });
     }
   });
+
+  let otherUser = 1;
+  for (let i = 0; i < 2; i++) {
+    usersStats[i]["purchaseTypeByMonthReal"] = cloneDeep(usersStats[i]["purchaseTypeByMonthMine"]);
+    Object.keys(usersStats[otherUser]["purchaseTypeByMonthYour"]).forEach((_type) => {
+      usersStats[otherUser]["purchaseTypeByMonthYour"][_type].forEach((v, k) => {
+        if (!usersStats[i]["purchaseTypeByMonthReal"].hasOwnProperty(_type)) {
+          usersStats[i]["purchaseTypeByMonthReal"][_type] = new Map();
+        }
+        let currentValue = usersStats[i]["purchaseTypeByMonthReal"][_type].get(k);
+        if (isNaN(currentValue)) {
+          currentValue = 0;
+        }
+        usersStats[i]["purchaseTypeByMonthReal"][_type].set(k, (parseFloat(currentValue) + parseFloat(v)).toFixed(2));
+      });
+    });
+    otherUser = 0;
+  }
 
   return usersStats;
 };

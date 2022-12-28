@@ -1,6 +1,6 @@
 const cloneDeep = require("lodash.clonedeep");
 
-const aux = (usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare) => {
+const populatePurchases = (usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare) => {
   let typeByMonth = ["purchaseTypeByMonthRelative", "purchaseTypeByMonthMine", "purchaseTypeByMonthYour"];
   let targetValue = ["value", "myShare", "youShare"];
 
@@ -59,29 +59,35 @@ const renameKeys = (usersPurchase, i) => {
 
 // Append data from same row
 // Make stats calculations
-const formatAndCal = (resUsers, resUser1, resUser2) => {
+const formatAndCal = (resUsers, resUser1, resUser2, resTransactions) => {
   let appendedList = [];
   let userTotal = [0, 0];
   let userOwn = [0, 0];
   let userShare = [0, 0];
   let usersStats = [
     {
-      purchaseTypeByMonthRelative: {},  // What left my wallet
-      purchaseTypeByMonthMine: {},      // What should have left my wallet
-      purchaseTypeByMonthYour: {},      // What I paid for someone
-      purchaseTypeByMonthReal: {},      // What should have left my wallet in reality (couple expenses)
+      purchaseTypeByMonthRelative: {}, // What left my wallet
+      purchaseTypeByMonthMine: {}, // What should have left my wallet  (how much I spent on supermarket)
+      purchaseTypeByMonthYour: {}, // What I paid for someone          (how much I payed her for supermarket)
+      purchaseTypeByMonthReal: {}, // What should have left my wallet in reality (how much I spent + she payed for me on supermarket - couple expenses)
+      purchaseTypeByMonthCouple: {}, // What really left from both combined (how much we both spent on supermarket)
       avg_purchase_by_month_relative: {},
       avg_purchase_by_month_mine: {},
-      avg_purchase_by_month_total: {},
+      avg_purchase_by_month_your: {},
+      avg_purchase_by_month_real: {},
+      avg_purchase_by_month_couple: {},
     },
     {
       purchaseTypeByMonthRelative: {},
       purchaseTypeByMonthMine: {},
       purchaseTypeByMonthYour: {},
       purchaseTypeByMonthReal: {},
+      purchaseTypeByMonthCouple: {},
       avg_purchase_by_month_relative: {},
       avg_purchase_by_month_mine: {},
-      avg_purchase_by_month_total: {},
+      avg_purchase_by_month_your: {},
+      avg_purchase_by_month_real: {},
+      avg_purchase_by_month_couple: {},
     },
   ];
 
@@ -90,7 +96,7 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     let user = 0,
       maxUser = 2;
 
-    [usersPurchase, userTotal, userOwn, userShare] = aux(usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare);
+    [usersPurchase, userTotal, userOwn, userShare] = populatePurchases(usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare);
     usersPurchase = renameKeys(usersPurchase, 0);
     usersPurchase = renameKeys(usersPurchase, 1);
 
@@ -102,7 +108,7 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     let usersPurchase = [resUser1.pop(), 0];
     let user = 0,
       maxUser = 1;
-    [usersPurchase, userTotal, userOwn, userShare] = aux(usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare);
+    [usersPurchase, userTotal, userOwn, userShare] = populatePurchases(usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare);
 
     usersPurchase = renameKeys(usersPurchase, 0);
     appendedList.push(usersPurchase[0]);
@@ -112,7 +118,7 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     let usersPurchase = [0, resUser2.pop()];
     let user = 1,
       maxUser = 2;
-    [usersPurchase, userTotal, userOwn, userShare] = aux(usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare);
+    [usersPurchase, userTotal, userOwn, userShare] = populatePurchases(usersStats, usersPurchase, user, maxUser, userTotal, userOwn, userShare);
 
     usersPurchase = renameKeys(usersPurchase, 1);
     appendedList.push(usersPurchase[1]);
@@ -134,18 +140,20 @@ const formatAndCal = (resUsers, resUser1, resUser2) => {
     appendedList[rowNr++]["calcs"] = userTotal[i];
   }
 
-  if (userShare[0] >= userShare[1]) {
+  [appendedList, rowNr] = transAdjust(appendedList, resTransactions, rowNr, resUsers);
+
+  if (userShare[0] - appendedList[rowNr - 4]["calcs"] >= userShare[1] - appendedList[rowNr - 2]["calcs"]) {
     appendedList[rowNr]["name"] = resUsers[1].name;
     appendedList[rowNr++]["calcs"] = "Dept";
 
     appendedList[rowNr]["name"] = "Value";
-    appendedList[rowNr++]["calcs"] = userShare[0] - userShare[1];
+    appendedList[rowNr++]["calcs"] = userShare[0] - appendedList[rowNr - 4]["calcs"] - userShare[1];
   } else {
     appendedList[rowNr]["name"] = resUsers[0].name;
     appendedList[rowNr++]["calcs"] = "Dept";
 
     appendedList[rowNr]["name"] = "Value";
-    appendedList[rowNr++]["calcs"] = userShare[1] - userShare[0];
+    appendedList[rowNr++]["calcs"] = userShare[1] - appendedList[rowNr - 2]["calcs"] - userShare[0];
   }
 
   return [appendedList, rowNr, usersStats];
@@ -171,22 +179,30 @@ const transAdjust = (appendedList, resTransactions, rowNr, users) => {
 
   appendedList[rowNr]["name"] = users[1].name;
   appendedList[rowNr++]["calcs"] = totalUser2;
-
   return [appendedList, rowNr];
 };
 
-/*  purchaseTypeByMonthRelative,
-    purchaseTypeByMonthMine,
-    purchaseTypeByMonthYour,
-    purchaseTypeByMonthReal,
-    avg_purchase_by_month_relative,
-    avg_purchase_by_month_mine,
-    avg_purchase_by_month_total, */
+/*    purchaseTypeByMonthRelative: {},    // What left my wallet
+      purchaseTypeByMonthMine: {},        // What should have left my wallet
+      purchaseTypeByMonthYour: {},        // What I paid for someone
+      purchaseTypeByMonthReal: {},        // What should have left my wallet in reality (couple expenses)
+      purchaseTypeByMonthCouple: {},      // What left from both wallets combined
+      avg_purchase_by_month_relative: {},
+      avg_purchase_by_month_mine: {},
+      avg_purchase_by_month_your: {},
+      avg_purchase_by_month_real: {},
+      avg_purchase_by_month_couple: {},   */
 const statsCalcs = (usersStats) => {
   let calcsIO = {
     purchaseTypeByMonthRelative: "avg_purchase_by_month_relative",
     purchaseTypeByMonthMine: "avg_purchase_by_month_mine",
+    purchaseTypeByMonthYour: "avg_purchase_by_month_your",
+    purchaseTypeByMonthReal: "avg_purchase_by_month_real",
+    purchaseTypeByMonthCouple: "avg_purchase_by_month_couple",
   };
+
+  calcPurchaseReal(usersStats);
+  calPurchaseCouple(usersStats);
 
   Object.keys(calcsIO).forEach((input) => {
     for (let i = 0; i < usersStats.length; i++) {
@@ -202,6 +218,11 @@ const statsCalcs = (usersStats) => {
     }
   });
 
+  return usersStats;
+};
+
+// Get purchases by type by month for Real wallet spent
+const calcPurchaseReal = (usersStats) => {
   let otherUser = 1;
   for (let i = 0; i < 2; i++) {
     usersStats[i]["purchaseTypeByMonthReal"] = cloneDeep(usersStats[i]["purchaseTypeByMonthMine"]);
@@ -219,8 +240,63 @@ const statsCalcs = (usersStats) => {
     });
     otherUser = 0;
   }
-
-  return usersStats;
 };
 
-module.exports = { formatAndCal, transAdjust, statsCalcs };
+// Get purchases by type by month for Couple wallet spent
+const calPurchaseCouple = (usersStats) => {
+  usersStats[0]["purchaseTypeByMonthCouple"] = cloneDeep(usersStats[0]["purchaseTypeByMonthRelative"]);
+  Object.keys(usersStats[1]["purchaseTypeByMonthRelative"]).forEach((_type) => {
+    usersStats[1]["purchaseTypeByMonthRelative"][_type].forEach((v, k) => {
+      if (!usersStats[0]["purchaseTypeByMonthCouple"].hasOwnProperty(_type)) {
+        usersStats[0]["purchaseTypeByMonthCouple"][_type] = new Map();
+      }
+      let currentValue = usersStats[0]["purchaseTypeByMonthCouple"][_type].get(k);
+      if (isNaN(currentValue)) {
+        currentValue = 0;
+      }
+      usersStats[0]["purchaseTypeByMonthCouple"][_type].set(k, (parseFloat(currentValue) + parseFloat(v)).toFixed(2));
+    });
+  });
+  usersStats[1]["purchaseTypeByMonthCouple"] = cloneDeep(usersStats[0]["purchaseTypeByMonthCouple"]);
+};
+
+const insertRows = (usersStats, appendedList, users) => {
+  let rowCount = 0;
+
+  appendedList[rowCount]["user1purchase"] = users[0].name;
+  appendedList[rowCount]["user2purchase"] = users[1].name;
+
+  for (let i = 0; i < usersStats.length; i++) {
+    let rowCount = 0;
+
+    Object.keys(usersStats[i]).forEach((_purchaseType) => {
+      if (appendedList[rowCount] == undefined) {
+        appendedList.push({});
+      }
+      appendedList[rowCount]["name" + (i + 1) + "purchase"] = _purchaseType;
+      Object.keys(usersStats[i][_purchaseType]).forEach((_type) => {
+        if (appendedList[rowCount] == undefined) {
+          appendedList.push({});
+        }
+        appendedList[rowCount]["type" + (i + 1) + "purchase"] = _type;
+        if (usersStats[i][_purchaseType][_type] instanceof Map) {
+          usersStats[i][_purchaseType][_type].forEach((v, k) => {
+            if (appendedList[rowCount] == undefined) {
+              appendedList.push({});
+            }
+            appendedList[rowCount]["month" + (i + 1)] = k;
+            appendedList[rowCount++]["value" + (i + 1) + "purchase"] = v;
+          });
+        } else {
+          if (appendedList[rowCount] == "undefined") {
+            appendedList.push({});
+          }
+          appendedList[rowCount++]["value" + (i + 1) + "purchase"] = usersStats[i][_purchaseType][_type];
+        }
+      });
+    });
+  }
+  return appendedList;
+};
+
+module.exports = { formatAndCal, transAdjust, statsCalcs, insertRows };
